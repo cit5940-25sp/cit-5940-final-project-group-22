@@ -1,0 +1,98 @@
+classDiagram
+    class Game {
+        -Board board
+        -List~Player~ players
+        -int currentPlayerIdx
+        +playTurn() void
+        +isGameOver() boolean
+    }
+
+    class Board {
+        -BoardSpace[][] spaces
+        +getValidMoves(Player) List~Move~
+        +makeMove(Move, Player) boolean
+        +copy() Board
+    }
+
+    class BoardSpace {
+        -int x, y
+        -Player owner
+        +isEmpty() boolean
+    }
+
+    class Move {
+        -int x, y
+        -List~Position~ flippedPieces
+    }
+
+    class Player {
+        <<interface>>
+        +getMove(Board) Move
+        +getColor() PlayerColor
+    }
+
+    class HumanPlayer {
+        -PlayerColor color
+        +getMove(Board) Move
+    }
+
+    class ComputerPlayer {
+        -PlayerColor color
+        -MoveStrategy strategy
+        +getMove(Board) Move
+        +setStrategy(MoveStrategy) void
+    }
+
+    class MoveStrategy {
+        <<interface>>
+        +getBestMove(Board, Player) Move
+        +getName() String
+    }
+
+    class MinimaxStrategy {
+        -int depth
+        +getBestMove(Board, Player) Move
+        -minimax(Board, int, boolean, Player) int
+    }
+
+    class ExpectimaxStrategy {
+        -int depth
+        +getBestMove(Board, Player) Move
+        -expectimax(Board, int, Player) int
+    }
+
+    class MCTSStrategy {
+        -int iterations
+        +getBestMove(Board, Player) Move
+        -select(Node) Node
+        -expand(Node) Node
+        -simulate(Board, Player) int
+        -backpropagate(Node, int) void
+    }
+
+    class CustomHybridStrategy {
+        -MoveStrategy earlyStrategy
+        -MoveStrategy midStrategy
+        -MoveStrategy lateStrategy
+        +getBestMove(Board, Player) Move
+        -determineGamePhase(Board) Phase
+    }
+
+    class Evaluator {
+        <<interface>>
+        +evaluate(Board, Player) int
+    }
+
+    Game --> Board : has
+    Game --> Player : has
+    Board *-- BoardSpace : contains
+    Player <|.. HumanPlayer : implements
+    Player <|.. ComputerPlayer : implements
+    ComputerPlayer --> MoveStrategy : uses
+    MoveStrategy <|.. MinimaxStrategy : implements
+    MoveStrategy <|.. ExpectimaxStrategy : implements
+    MoveStrategy <|.. MCTSStrategy : implements
+    MoveStrategy <|.. CustomHybridStrategy : implements
+    MinimaxStrategy --> Evaluator : uses
+    ExpectimaxStrategy --> Evaluator : uses
+    CustomHybridStrategy --> MoveStrategy : uses
