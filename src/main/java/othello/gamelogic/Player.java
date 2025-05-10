@@ -33,6 +33,53 @@ public abstract class Player {
      * @return a map with a destination BoardSpace mapped to a List of origin BoardSpaces.
      */
     public Map<BoardSpace, List<BoardSpace>> getAvailableMoves(BoardSpace[][] board) {
-        return null;
+        Map<BoardSpace, List<BoardSpace>> moves = new HashMap<>();
+
+        BoardSpace.SpaceType me       = getColor();
+        BoardSpace.SpaceType opponent = (me == BoardSpace.SpaceType.BLACK)
+                ? BoardSpace.SpaceType.WHITE
+                : BoardSpace.SpaceType.BLACK;
+
+        // Directions: N, NE, E, SE, S, SW, W, NW
+        int[] dx = {-1,-1, 0, 1, 1, 1, 0,-1};
+        int[] dy = { 0, 1, 1, 1, 0,-1,-1,-1};
+        int size = board.length;
+
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (board[i][j].getType() != BoardSpace.SpaceType.EMPTY) {
+                    continue;
+                }
+
+                List<BoardSpace> origins = new ArrayList<>();
+                // Check each direction for flippable opponent pieces
+                for (int d = 0; d < dx.length; d++) {
+                    int x = i + dx[d], y = j + dy[d];
+                    boolean seenOpponent = false;
+
+                    // Traverse while encountering opponent pieces
+                    while (x >= 0 && x < size
+                            && y >= 0 && y < size
+                            && board[x][y].getType() == opponent) {
+                        seenOpponent = true;
+                        x += dx[d];
+                        y += dy[d];
+                    }
+                    // If at least one opponent piece was seen and we end at a friendly piece,
+                    // record that friend as an origin for flipping.
+                    if (seenOpponent
+                            && x >= 0 && x < size
+                            && y >= 0 && y < size
+                            && board[x][y].getType() == me) {
+                        origins.add(board[x][y]);
+                    }
+                }
+
+                if (!origins.isEmpty()) {
+                    moves.put(board[i][j], origins);
+                }
+            }
+        }
+        return moves;
     }
 }

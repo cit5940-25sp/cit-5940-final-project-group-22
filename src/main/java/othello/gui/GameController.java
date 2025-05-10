@@ -1,5 +1,6 @@
 package othello.gui;
 
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -175,8 +176,9 @@ public class GameController  {
         } else if (availableMoves.size() == 0) {
             if (og.getPlayerOne().getPlayerOwnedSpacesSpaces().size() + og.getPlayerTwo().getPlayerOwnedSpacesSpaces().size() != 64 && skippedTurns != 2) {
                 skipTurnText(player);
-                takeTurn(otherPlayer(player));
                 skippedTurns++;
+                // schedule next turn instead of direct recursion
+                Platform.runLater(() -> takeTurn(otherPlayer(player)));
             } else if (skippedTurns == 2 || og.getPlayerOne().getPlayerOwnedSpacesSpaces().size() + og.getPlayerTwo().getPlayerOwnedSpacesSpaces().size() == 64){
                 gameOver();
             }
