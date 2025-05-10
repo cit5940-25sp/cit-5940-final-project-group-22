@@ -8,9 +8,14 @@ import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.event.ActionEvent;
+import javafx.scene.control.ComboBox;
+
+
 
 import javafx.scene.shape.Circle;
 import othello.gamelogic.*;
+
 
 import java.util.List;
 import java.util.Map;
@@ -32,6 +37,15 @@ public class GameController  {
 
     @FXML
     private Button computerTurnBtn;
+
+    @FXML
+    private ComboBox<String> blackPlayerType;
+
+    @FXML
+    private ComboBox<String> whitePlayerType;
+
+    @FXML
+    private Button startButton;
 
     // Private variables
     private OthelloGame og;
@@ -92,6 +106,34 @@ public class GameController  {
                 guiBoard[space.getX()][space.getY()] = guiSpace;
             }
         }
+    }
+
+
+    /**
+     * Called when the user clicks the "Start Game" button.
+     */
+    @FXML
+    private void onStartGame(ActionEvent event) {
+        // determine black player
+        Player black = "Computer".equals(blackPlayerType.getValue())
+                ? new ComputerPlayer("custom")
+                : new HumanPlayer();
+
+        // determine white player
+        Player white = "Computer".equals(whitePlayerType.getValue())
+                ? new ComputerPlayer("custom")
+                : new HumanPlayer();
+
+        // initialize game logic
+        initGame(
+                black instanceof HumanPlayer ? "human" : "custom",
+                white instanceof HumanPlayer ? "human" : "custom"
+        );
+
+        // disable the setup controls
+        blackPlayerType.setDisable(true);
+        whitePlayerType.setDisable(true);
+        startButton.setDisable(true);
     }
 
     /**
@@ -359,4 +401,5 @@ public class GameController  {
                     og.getPlayerTwo().getColor() + ": " + og.getPlayerTwo().getPlayerOwnedSpacesSpaces().size());
         }
     }
+
 }

@@ -19,6 +19,7 @@ public class ComputerPlayer extends Player {
      * @return the chosen BoardSpace to play
      */
     public BoardSpace chooseMove(OthelloGame game) {
-        return strategy.chooseMove(game);
+        return strategy.chooseMove(game, this);
     }
+
 }

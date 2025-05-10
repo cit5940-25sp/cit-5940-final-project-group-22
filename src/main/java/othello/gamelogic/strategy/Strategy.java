@@ -2,6 +2,7 @@ package othello.gamelogic.strategy;
 
 import othello.gamelogic.BoardSpace;
 import othello.gamelogic.OthelloGame;
+import othello.gamelogic.Player;
 
 /**
  * Strategy interface for AI players.
@@ -14,5 +15,6 @@ public interface Strategy {
      * @param game the current Othello game
      * @return the chosen BoardSpace to place a disc
      */
-    BoardSpace chooseMove(OthelloGame game);
+
+    BoardSpace chooseMove(OthelloGame game, Player me);
 }

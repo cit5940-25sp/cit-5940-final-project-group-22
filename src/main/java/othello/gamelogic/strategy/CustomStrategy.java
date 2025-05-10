@@ -2,6 +2,10 @@ package othello.gamelogic.strategy;
 
 import othello.gamelogic.BoardSpace;
 import othello.gamelogic.OthelloGame;
+import othello.gamelogic.Player;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Custom AI strategy implementation.
@@ -9,9 +13,11 @@ import othello.gamelogic.OthelloGame;
  */
 public class CustomStrategy implements Strategy {
     @Override
-    public BoardSpace chooseMove(OthelloGame game) {
-        // TODO: Implement your own decision-making algorithm for the AI player
-        return null;
+    public BoardSpace chooseMove(OthelloGame game, Player me) {
+        Map<BoardSpace, List<BoardSpace>> moves = game.getAvailableMoves(me);
+        return moves.isEmpty()
+                ? null
+                : moves.keySet().iterator().next();
     }
 }
 
