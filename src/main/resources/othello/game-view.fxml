@@ -5,6 +5,8 @@
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
 
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="960.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="othello.gui.GameController">
    <left>
       <BorderPane prefHeight="600.0" prefWidth="650.0" BorderPane.alignment="CENTER">
@@ -24,6 +26,34 @@
                <center>
                   <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="8.0" BorderPane.alignment="CENTER">
                      <children>
+                        <!-- Player selection controls -->
+                        <HBox spacing="10.0" alignment="CENTER">
+                           <children>
+                              <VBox spacing="4.0" alignment="CENTER">
+                                 <Label text="Black:" />
+                                 <ComboBox fx:id="blackPlayerType" prefWidth="120">
+                                    <items>
+                                       <FXCollections fx:factory="observableArrayList">
+                                          <String fx:value="Human"/>
+                                          <String fx:value="Computer"/>
+                                       </FXCollections>
+                                    </items>
+                                 </ComboBox>
+                              </VBox>
+                              <VBox spacing="4.0" alignment="CENTER">
+                                 <Label text="White:" />
+                                 <ComboBox fx:id="whitePlayerType" prefWidth="120">
+                                    <items>
+                                       <FXCollections fx:factory="observableArrayList">
+                                          <String fx:value="Human"/>
+                                          <String fx:value="Computer"/>
+                                       </FXCollections>
+                                    </items>
+                                 </ComboBox>
+                              </VBox>
+                              <Button fx:id="startButton" text="Start Game" onAction="#onStartGame"/>
+                           </children>
+                        </HBox>
                         <Circle fx:id="turnCircle" fill="DODGERBLUE" radius="30.0" stroke="BLACK" strokeType="INSIDE" />
                         <Label fx:id="turnLabel" contentDisplay="CENTER" text="Turn" textAlignment="CENTER" textFill="WHITE">
                            <font>
