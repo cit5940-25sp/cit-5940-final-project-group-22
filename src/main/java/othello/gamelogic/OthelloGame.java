@@ -1,7 +1,7 @@
 package othello.gamelogic;
 
 import java.util.*;
-
+import othello.gamelogic.state.GameMemento;
 /**
  * Models a board of Othello.
  * Includes methods to get available moves and take spaces.
@@ -12,11 +12,22 @@ public class OthelloGame {
     private BoardSpace[][] board;
     private final Player playerOne;
     private final Player playerTwo;
+    private Player currentPlayer;
+    private Player waitingPlayer;
+
 
     public OthelloGame(Player playerOne, Player playerTwo) {
         this.playerOne = playerOne;
         this.playerTwo = playerTwo;
+
+        this.playerOne.setColor(BoardSpace.SpaceType.BLACK);
+        this.playerTwo.setColor(BoardSpace.SpaceType.WHITE);
+
         initBoard();
+
+        // Initialize turn order: Black (playerOne) goes first
+        this.currentPlayer = playerOne;
+        this.waitingPlayer = playerTwo;
     }
 
     public BoardSpace[][] getBoard() {
@@ -51,6 +62,10 @@ public class OthelloGame {
                 board[i][j] = new BoardSpace(i, j, BoardSpace.SpaceType.EMPTY);
             }
         }
+
+        // Clear previous owned spaces (if re-init)
+        playerOne.getPlayerOwnedSpacesSpaces().clear();
+        playerTwo.getPlayerOwnedSpacesSpaces().clear();
 
         // 2) Place the 4 starting discs
         //    (row 3,col 3) WHITE    (row 3,col 4) BLACK
@@ -132,6 +147,10 @@ public class OthelloGame {
         takeSpace(actingPlayer, opponent,
                 selectedDestination.getX(),
                 selectedDestination.getY());
+
+        Player tmp = this.currentPlayer;
+        this.currentPlayer = this.waitingPlayer;
+        this.waitingPlayer = tmp;
     }
     /**
      * PART 2
@@ -148,5 +167,48 @@ public class OthelloGame {
 
     public void setBoard(BoardSpace[][] board) {
         this.board = board;
+    }
+
+
+    /**
+     * Create a memento capturing the full game state.
+     */
+    public GameMemento createMemento() {
+        List<BoardSpace> p1List = new ArrayList<>(getPlayerOne().getPlayerOwnedSpacesSpaces());
+        List<BoardSpace> p2List = new ArrayList<>(getPlayerTwo().getPlayerOwnedSpacesSpaces());
+        return new GameMemento(
+                this.board,
+                getPlayerOne(),
+                getPlayerTwo(),
+                currentPlayer,
+                p1List,
+                p2List
+        );
+    }
+
+    /**
+     * Restore game state from a memento.
+     */
+    public void restoreFromMemento(GameMemento m) {
+        // restore board
+        this.board = m.getBoardSnapshot();
+
+        // restore owned spaces
+        getPlayerOne().getPlayerOwnedSpacesSpaces().clear();
+        getPlayerOne().getPlayerOwnedSpacesSpaces().addAll(m.getP1Spaces());
+        getPlayerTwo().getPlayerOwnedSpacesSpaces().clear();
+        getPlayerTwo().getPlayerOwnedSpacesSpaces().addAll(m.getP2Spaces());
+
+        // restore current player
+        this.currentPlayer = m.getCurrentPlayer();
+        this.waitingPlayer = (currentPlayer == getPlayerOne())
+                ? getPlayerTwo() : getPlayerOne();
+    }
+
+    /**
+     * Returns the player whose turn it is now.
+     */
+    public Player getCurrentPlayer() {
+        return currentPlayer;
     }
 }

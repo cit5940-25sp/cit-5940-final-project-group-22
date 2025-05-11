@@ -15,6 +15,8 @@ import javafx.scene.control.ComboBox;
 
 import javafx.scene.shape.Circle;
 import othello.gamelogic.*;
+import othello.gamelogic.state.GameHistory;
+import othello.gamelogic.state.GameMemento;
 
 
 import java.util.List;
@@ -46,6 +48,13 @@ public class GameController  {
 
     @FXML
     private Button startButton;
+
+
+    @FXML private Button saveBtn;
+    @FXML private Button loadBtn;
+
+    // Caretaker for mementos
+    private final GameHistory history = new GameHistory();
 
     // Private variables
     private OthelloGame og;
@@ -133,6 +142,33 @@ public class GameController  {
         blackPlayerType.setDisable(true);
         whitePlayerType.setDisable(true);
         startButton.setDisable(true);
+
+        // Setup Save/Load handlers
+        saveBtn.setDisable(false);     // enable Save immediately
+        loadBtn.setDisable(true);      // no mementos yet
+
+        saveBtn.setOnAction(e -> {
+            // save current state
+            history.save(og.createMemento());
+            loadBtn.setDisable(false);
+        });
+
+        loadBtn.setOnAction(e -> {
+            GameMemento m = history.undo();
+            if (m != null) {
+                // restore model
+                og.restoreFromMemento(m);
+                // refresh UI
+                clearBoard();
+                displayBoard();
+                turnText(og.getCurrentPlayer());
+            }
+            // if no more history, disable Load
+            if (history.undo() == null) {
+                loadBtn.setDisable(true);
+            }
+        });
+
     }
 
     /**
