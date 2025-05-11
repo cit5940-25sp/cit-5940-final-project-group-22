@@ -79,6 +79,8 @@ public class OthelloGame {
      * @param y the y-coordinate of the space to claim
      */
 
+
+
     public void takeSpace(Player actingPlayer, Player opponent, int x, int y) {
         BoardSpace space = board[x][y];
         // If it's already owned by actingPlayer, do nothing
@@ -144,4 +146,7 @@ public class OthelloGame {
         return computer.chooseMove(this);
     }
 
+    public void setBoard(BoardSpace[][] board) {
+        this.board = board;
+    }
 }

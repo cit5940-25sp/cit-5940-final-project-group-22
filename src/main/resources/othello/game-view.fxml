@@ -35,7 +35,10 @@
                                     <items>
                                        <FXCollections fx:factory="observableArrayList">
                                           <String fx:value="Human"/>
-                                          <String fx:value="Computer"/>
+                                          <String fx:value="Minimax"/>
+                                          <String fx:value="Expectimax"/>
+                                          <String fx:value="MCTS"/>
+                                          <String fx:value="Custom"/>
                                        </FXCollections>
                                     </items>
                                  </ComboBox>
@@ -46,7 +49,10 @@
                                     <items>
                                        <FXCollections fx:factory="observableArrayList">
                                           <String fx:value="Human"/>
-                                          <String fx:value="Computer"/>
+                                          <String fx:value="Minimax"/>
+                                          <String fx:value="Expectimax"/>
+                                          <String fx:value="MCTS"/>
+                                          <String fx:value="Custom"/>
                                        </FXCollections>
                                     </items>
                                  </ComboBox>
