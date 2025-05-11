@@ -1,164 +1,130 @@
 package othello.gamelogic.strategy;
 
-import othello.gamelogic.BoardSpace;
-import othello.gamelogic.HumanPlayer;
-import othello.gamelogic.OthelloGame;
-import othello.gamelogic.Player;
-
-import java.util.*;
+import othello.Constants;
+import othello.gamelogic.*;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Custom strategy: one-level opponent minimization response + heuristic evaluation
+ * Strategy that uses Minimax with a fixed depth and positional weights.
  */
-public class CustomStrategy implements Strategy {
-    // Positional weight table
-    private static final int[][] WEIGHTS = {
-            { 100, -20,  10,   5,   5,  10, -20, 100},
-            { -20, -50,  -2,  -2,  -2,  -2, -50, -20},
-            {  10,  -2,   2,   2,   2,   2,  -2,  10},
-            {   5,  -2,   2,   0,   0,   2,  -2,   5},
-            {   5,  -2,   2,   0,   0,   2,  -2,   5},
-            {  10,  -2,   2,   2,   2,   2,  -2,  10},
-            { -20, -50,  -2,  -2,  -2,  -2, -50, -20},
-            { 100, -20,  10,   5,   5,  10, -20, 100}
-    };
+public class MinimaxStrategy implements Strategy {
+    private static final int MAX_DEPTH = 1;
 
     @Override
     public BoardSpace chooseMove(OthelloGame game, Player me) {
-        Map<BoardSpace, List<BoardSpace>> moves = game.getAvailableMoves(me);
-        if (moves.isEmpty()) return null;
+        Player opponent = (game.getPlayerOne() == me)
+                ? game.getPlayerTwo()
+                : game.getPlayerOne();
 
-        // Identify opponent
-        Player opp = (game.getPlayerOne() == me)
-                ? game.getPlayerTwo() : game.getPlayerOne();
+        Map<BoardSpace, List<BoardSpace>> moves = game.getAvailableMoves(me);
+        if (moves == null || moves.isEmpty()) {
+            return null;
+        }
 
         BoardSpace bestMove = null;
-        double     bestScore = Double.NEGATIVE_INFINITY;
+        int bestScore = Integer.MIN_VALUE;
+        for (BoardSpace dest : moves.keySet()) {
+            // clone the game fully (board + ownedSpaces) using generic HumanPlayer
+            OthelloGame copy = cloneGameFully(game);
+            // determine copies corresponding to me/opponent by color
+            Player meCopy  = copy.getPlayerOne().getColor()  == me.getColor()
+                    ? copy.getPlayerOne() : copy.getPlayerTwo();
+            Player opCopy  = meCopy == copy.getPlayerOne()
+                    ? copy.getPlayerTwo() : copy.getPlayerOne();
 
-        // Evaluate each candidate move with one opponent response
-        for (BoardSpace move : moves.keySet()) {
-            // 1) Clone the current game and apply the move
-            OthelloGame sim1 = cloneGame(game);
-            Player simMe  = sim1.getPlayerOne().getColor() == me.getColor()
-                    ? sim1.getPlayerOne() : sim1.getPlayerTwo();
-            Player simOpp = (simMe == sim1.getPlayerOne())
-                    ? sim1.getPlayerTwo() : sim1.getPlayerOne();
-            sim1.takeSpaces(simMe, simOpp,
-                    sim1.getAvailableMoves(simMe),
-                    move);
-
-            // 2) For each opponent response, compute the worst (minimum) score
-            Map<BoardSpace, List<BoardSpace>> oppMoves =
-                    sim1.getAvailableMoves(simOpp);
-            double worst = Double.POSITIVE_INFINITY;
-            if (oppMoves.isEmpty()) {
-                // No moves for opponent, evaluate directly
-                worst = evaluate(sim1, simMe, simOpp);
-            } else {
-                for (BoardSpace r : oppMoves.keySet()) {
-                    OthelloGame sim2 = cloneGame(sim1);
-                    Player m2 = sim2.getPlayerOne().getColor() == me.getColor()
-                            ? sim2.getPlayerOne() : sim2.getPlayerTwo();
-                    Player o2 = (m2 == sim2.getPlayerOne())
-                            ? sim2.getPlayerTwo() : sim2.getPlayerOne();
-                    sim2.takeSpaces(o2, m2,
-                            sim2.getAvailableMoves(o2),
-                            r);
-                    double score = evaluate(sim2, m2, o2);
-                    worst = Math.min(worst, score);
-                }
-            }
-
-            // 3) Choose move with the highest worst-case score
-            if (worst > bestScore) {
-                bestScore = worst;
-                bestMove  = move;
+            copy.takeSpaces(meCopy, opCopy, copy.getAvailableMoves(meCopy), dest);
+            int score = minimax(copy, meCopy, opCopy, MAX_DEPTH - 1, false);
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove  = dest;
             }
         }
-
-        // Return the BoardSpace from the original game board
-        return game.getBoard()[bestMove.getX()][bestMove.getY()];
+        return bestMove;
     }
 
-    /**
-     * Heuristic evaluation function: positional weight + disc difference
-     * + mobility + frontier disc penalty
-     */
-    private double evaluate(OthelloGame g, Player me, Player opp) {
-        BoardSpace[][] b = g.getBoard();
-        double score = 0;
+    private int minimax(OthelloGame game, Player me, Player opponent,
+                        int depth, boolean maximizing) {
+        Player current = maximizing ? me : opponent;
+        Player other   = maximizing ? opponent : me;
 
-        // Positional weights
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                if (b[i][j].getType() == me.getColor())      score += WEIGHTS[i][j];
-                else if (b[i][j].getType() == opp.getColor()) score -= WEIGHTS[i][j];
-            }
+        Map<BoardSpace, List<BoardSpace>> moves = game.getAvailableMoves(current);
+        //  Depth 0 → evaluate statically
+        if (depth == 0) {
+            return evaluateBoard(game, me, opponent);
         }
 
-        // Disc count difference
-        score += 2 * (me.getPlayerOwnedSpacesSpaces().size()
-                - opp.getPlayerOwnedSpacesSpaces().size());
+        if (moves.isEmpty()) {
+        //  No moves and skip turn, do not decrement depth
+        Map<BoardSpace, List<BoardSpace>> oppMoves = game.getAvailableMoves(other);
+        // If the opponent also has no moves, the game is over—evaluate final board
+        if (oppMoves.isEmpty()) {
+            return evaluateBoard(game, me, opponent);
+        }
+        // Otherwise skip this player’s turn (do not decrease depth)
+        return minimax(game, me, opponent, depth, !maximizing);
+    }
 
-        // Mobility difference
-        score += 5 * (g.getAvailableMoves(me).size()
-                - g.getAvailableMoves(opp).size());
+        int best = maximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        for (BoardSpace dest : moves.keySet()) {
+            OthelloGame copy = cloneGameFully(game);
+            Player curCopy = copy.getPlayerOne().getColor() == current.getColor()
+                    ? copy.getPlayerOne() : copy.getPlayerTwo();
+            Player othCopy = curCopy == copy.getPlayerOne()
+                    ? copy.getPlayerTwo() : copy.getPlayerOne();
 
-        // Frontier disc penalty
-        score -= 3 * (frontierCount(g, me) - frontierCount(g, opp));
+            copy.takeSpaces(curCopy, othCopy, copy.getAvailableMoves(curCopy), dest);
+            int val = minimax(copy, me, opponent, depth - 1, !maximizing);
+            best = maximizing ? Math.max(best, val) : Math.min(best, val);
+        }
+        return best;
+    }
 
+    private int evaluateBoard(OthelloGame game, Player me, Player opponent) {
+        int score = 0;
+        BoardSpace[][] board = game.getBoard();
+        for (int x = 0; x < board.length; x++) {
+            for (int y = 0; y < board[x].length; y++) {
+                BoardSpace.SpaceType type = board[x][y].getType();
+                int w = Constants.BOARD_WEIGHTS[x][y];
+                if (type == me.getColor())      score += w;
+                else if (type == opponent.getColor()) score -= w;
+            }
+        }
         return score;
     }
 
     /**
-     * Count frontier discs: discs adjacent to empty squares
+     * Deep clone of the game state: copies board and reconstructs ownedSpaces
+     * using simple HumanPlayer clones so that takeSpaces works correctly.
      */
-    private int frontierCount(OthelloGame g, Player p) {
-        int cnt = 0;
-        BoardSpace[][] b = g.getBoard();
-        for (BoardSpace bs : p.getPlayerOwnedSpacesSpaces()) {
-            int x = bs.getX(), y = bs.getY();
-            boolean isFront = false;
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    int nx = x + dx, ny = y + dy;
-                    if (nx >= 0 && ny >= 0 && nx < 8 && ny < 8
-                            && b[nx][ny].getType() == BoardSpace.SpaceType.EMPTY) {
-                        isFront = true;
-                    }
-                }
-            }
-            if (isFront) cnt++;
-        }
-        return cnt;
-    }
-
-    /**
-     * Clone the entire game state, including board and ownedSpaces lists
-     */
-    private OthelloGame cloneGame(OthelloGame orig) {
-        // 1. Create new players
+    private OthelloGame cloneGameFully(OthelloGame original) {
+        // clone two generic players with same colors
         Player p1 = new HumanPlayer();
         Player p2 = new HumanPlayer();
-        p1.setColor(orig.getPlayerOne().getColor());
-        p2.setColor(orig.getPlayerTwo().getColor());
+        p1.setColor(original.getPlayerOne().getColor());
+        p2.setColor(original.getPlayerTwo().getColor());
 
-        // 2. Initialize a new game and copy the board
+        // construct new game and inject cloned board
         OthelloGame copy = new OthelloGame(p1, p2);
-        BoardSpace[][] ob = orig.getBoard();
-        BoardSpace[][] nb = new BoardSpace[8][8];
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                nb[i][j] = new BoardSpace(ob[i][j]);
+        BoardSpace[][] orig = original.getBoard();
+        BoardSpace[][] cloned = new BoardSpace[orig.length][orig[0].length];
+
+        for (int i = 0; i < orig.length; i++) {
+            for (int j = 0; j < orig[i].length; j++) {
+                cloned[i][j] = new BoardSpace(orig[i][j]);
             }
         }
-        copy.setBoard(nb);
+        copy.setBoard(cloned);
 
-        // 3. Rebuild ownedSpaces lists
-        for (BoardSpace[] row : nb) {
+        // rebuild ownedSpaces lists based on cloned board
+        for (BoardSpace[] row : cloned) {
             for (BoardSpace bs : row) {
-                if (bs.getType() == p1.getColor())      p1.getPlayerOwnedSpacesSpaces().add(bs);
-                else if (bs.getType() == p2.getColor()) p2.getPlayerOwnedSpacesSpaces().add(bs);
+                if (bs.getType() == p1.getColor()) {
+                    p1.getPlayerOwnedSpacesSpaces().add(bs);
+                } else if (bs.getType() == p2.getColor()) {
+                    p2.getPlayerOwnedSpacesSpaces().add(bs);
+                }
             }
         }
         return copy;
