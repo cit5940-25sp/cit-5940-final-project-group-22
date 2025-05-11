@@ -9,7 +9,7 @@ import java.util.Map;
  * Strategy that uses Minimax with a fixed depth and positional weights.
  */
 public class MinimaxStrategy implements Strategy {
-    private static final int MAX_DEPTH = 1;
+    private static final int MAX_DEPTH = 2;
 
     @Override
     public BoardSpace chooseMove(OthelloGame game, Player me) {
