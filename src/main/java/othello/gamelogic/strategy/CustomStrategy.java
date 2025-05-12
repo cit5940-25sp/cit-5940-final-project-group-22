@@ -1,166 +1,139 @@
 package othello.gamelogic.strategy;
 
 import othello.gamelogic.BoardSpace;
-import othello.gamelogic.HumanPlayer;
 import othello.gamelogic.OthelloGame;
 import othello.gamelogic.Player;
+import othello.gamelogic.HumanPlayer;
 
 import java.util.*;
 
 /**
- * Custom strategy: one-level opponent minimization response + heuristic evaluation
+ * CustomStrategy: a corner-priority + flat Monte Carlo rollout AI.
+ *
+ * 1) If any corner moves are available, pick one at random.
+ * 2) Otherwise, for each legal move:
+ *    – Perform a fixed number of random-playout simulations.
+ *    – Estimate win rate from those simulations.
+ *    – Choose the move with the highest estimated win rate.
+ *
+ * Complexity: O(M * R) playouts per move decision, where
+ * M ≈ average branching factor and R = number of rollouts.
  */
 public class CustomStrategy implements Strategy {
-    // Positional weight table
-    private static final int[][] WEIGHTS = {
-            { 100, -20,  10,   5,   5,  10, -20, 100},
-            { -20, -50,  -2,  -2,  -2,  -2, -50, -20},
-            {  10,  -2,   2,   2,   2,   2,  -2,  10},
-            {   5,  -2,   2,   0,   0,   2,  -2,   5},
-            {   5,  -2,   2,   0,   0,   2,  -2,   5},
-            {  10,  -2,   2,   2,   2,   2,  -2,  10},
-            { -20, -50,  -2,  -2,  -2,  -2, -50, -20},
-            { 100, -20,  10,   5,   5,  10, -20, 100}
-    };
+    // Number of random playouts per candidate move
+    private static final int ROLLOUTS = 50;
+    private static final Random RANDOM = new Random();
 
     @Override
     public BoardSpace chooseMove(OthelloGame game, Player me) {
-        Map<BoardSpace, List<BoardSpace>> moves = game.getAvailableMoves(me);
-        if (moves.isEmpty()) return null;
+        Map<BoardSpace, List<BoardSpace>> legalMoves = game.getAvailableMoves(me);
+        if (legalMoves == null || legalMoves.isEmpty()) {
+            return null;  // No legal move
+        }
 
-        // Identify opponent
-        Player opp = (game.getPlayerOne() == me)
-                ? game.getPlayerTwo() : game.getPlayerOne();
+        // 1) Corner priority: check the four board corners first
+        int size = game.getBoard().length;
+        int[][] corners = {{0, 0}, {0, size-1}, {size-1, 0}, {size-1, size-1}};
+        List<BoardSpace> cornerOptions = new ArrayList<>();
+        for (int[] c : corners) {
+            BoardSpace bs = game.getBoard()[c[0]][c[1]];
+            if (legalMoves.containsKey(bs)) {
+                cornerOptions.add(bs);
+            }
+        }
+        if (!cornerOptions.isEmpty()) {
+            return cornerOptions.get(RANDOM.nextInt(cornerOptions.size()));
+        }
 
+        // 2) Monte Carlo rollouts for non-corner moves
+        double bestWinRate = -1.0;
         BoardSpace bestMove = null;
-        double     bestScore = Double.NEGATIVE_INFINITY;
-
-        // Evaluate each candidate move with one opponent response
-        for (BoardSpace move : moves.keySet()) {
-            // 1) Clone the current game and apply the move
-            OthelloGame sim1 = cloneGame(game);
-            Player simMe  = sim1.getPlayerOne().getColor() == me.getColor()
-                    ? sim1.getPlayerOne() : sim1.getPlayerTwo();
-            Player simOpp = (simMe == sim1.getPlayerOne())
-                    ? sim1.getPlayerTwo() : sim1.getPlayerOne();
-            sim1.takeSpaces(simMe, simOpp,
-                    sim1.getAvailableMoves(simMe),
-                    move);
-
-            // 2) For each opponent response, compute the worst (minimum) score
-            Map<BoardSpace, List<BoardSpace>> oppMoves =
-                    sim1.getAvailableMoves(simOpp);
-            double worst = Double.POSITIVE_INFINITY;
-            if (oppMoves.isEmpty()) {
-                // No moves for opponent, evaluate directly
-                worst = evaluate(sim1, simMe, simOpp);
-            } else {
-                for (BoardSpace r : oppMoves.keySet()) {
-                    OthelloGame sim2 = cloneGame(sim1);
-                    Player m2 = sim2.getPlayerOne().getColor() == me.getColor()
-                            ? sim2.getPlayerOne() : sim2.getPlayerTwo();
-                    Player o2 = (m2 == sim2.getPlayerOne())
-                            ? sim2.getPlayerTwo() : sim2.getPlayerOne();
-                    sim2.takeSpaces(o2, m2,
-                            sim2.getAvailableMoves(o2),
-                            r);
-                    double score = evaluate(sim2, m2, o2);
-                    worst = Math.min(worst, score);
+        for (BoardSpace move : legalMoves.keySet()) {
+            int wins = 0;
+            for (int i = 0; i < ROLLOUTS; i++) {
+                if (simulatePlayout(game, me, move)) {
+                    wins++;
                 }
             }
-
-            // 3) Choose move with the highest worst-case score
-            if (worst > bestScore) {
-                bestScore = worst;
-                bestMove  = move;
+            double winRate = (double) wins / ROLLOUTS;
+            if (winRate > bestWinRate) {
+                bestWinRate = winRate;
+                bestMove = move;
             }
         }
-
-        // Return the BoardSpace from the original game board
-        return game.getBoard()[bestMove.getX()][bestMove.getY()];
+        return bestMove;
     }
 
     /**
-     * Heuristic evaluation function: positional weight + disc difference
-     * + mobility + frontier disc penalty
+     * Run one random-playout from the given move and return true if 'me' wins.
      */
-    private double evaluate(OthelloGame g, Player me, Player opp) {
-        BoardSpace[][] b = g.getBoard();
-        double score = 0;
+    private boolean simulatePlayout(OthelloGame original, Player me, BoardSpace move) {
+        // 1) Clone the game state
+        OthelloGame sim = cloneGame(original);
+        Player simMe = matchPlayer(sim, me);
+        Player simOpp = (simMe == sim.getPlayerOne()) ? sim.getPlayerTwo() : sim.getPlayerOne();
 
-        // Positional weights
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                if (b[i][j].getType() == me.getColor())      score += WEIGHTS[i][j];
-                else if (b[i][j].getType() == opp.getColor()) score -= WEIGHTS[i][j];
+        // 2) Play the chosen move
+        Map<BoardSpace, List<BoardSpace>> avail = sim.getAvailableMoves(simMe);
+        sim.takeSpaces(simMe, simOpp, avail, move);
+
+        // 3) Alternate random moves until game end
+        Player current = simOpp;
+        while (true) {
+            Map<BoardSpace, List<BoardSpace>> moves = sim.getAvailableMoves(current);
+            if (moves.isEmpty()) {
+                // pass turn if no moves
+                current = (current == simMe) ? simOpp : simMe;
+                moves = sim.getAvailableMoves(current);
+                if (moves.isEmpty()) break;  // both players pass → end
             }
+            List<BoardSpace> choices = new ArrayList<>(moves.keySet());
+            BoardSpace pick = choices.get(RANDOM.nextInt(choices.size()));
+            Player other = (current == sim.getPlayerOne()) ? sim.getPlayerTwo() : sim.getPlayerOne();
+            sim.takeSpaces(current, other, moves, pick);
+            current = other;
         }
 
-        // Disc count difference
-        score += 2 * (me.getPlayerOwnedSpacesSpaces().size()
-                - opp.getPlayerOwnedSpacesSpaces().size());
-
-        // Mobility difference
-        score += 5 * (g.getAvailableMoves(me).size()
-                - g.getAvailableMoves(opp).size());
-
-        // Frontier disc penalty
-        score -= 3 * (frontierCount(g, me) - frontierCount(g, opp));
-
-        return score;
+        // 4) Count final discs to decide winner
+        BoardSpace.SpaceType myColor = simMe.getColor();
+        BoardSpace.SpaceType opColor = simOpp.getColor();
+        int myCount = 0, opCount = 0;
+        for (BoardSpace[] row : sim.getBoard()) {
+            for (BoardSpace bs : row) {
+                if (bs.getType() == myColor) myCount++;
+                else if (bs.getType() == opColor) opCount++;
+            }
+        }
+        return myCount > opCount;
     }
 
     /**
-     * Count frontier discs: discs adjacent to empty squares
-     */
-    private int frontierCount(OthelloGame g, Player p) {
-        int cnt = 0;
-        BoardSpace[][] b = g.getBoard();
-        for (BoardSpace bs : p.getPlayerOwnedSpacesSpaces()) {
-            int x = bs.getX(), y = bs.getY();
-            boolean isFront = false;
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    int nx = x + dx, ny = y + dy;
-                    if (nx >= 0 && ny >= 0 && nx < 8 && ny < 8
-                            && b[nx][ny].getType() == BoardSpace.SpaceType.EMPTY) {
-                        isFront = true;
-                    }
-                }
-            }
-            if (isFront) cnt++;
-        }
-        return cnt;
-    }
-
-    /**
-     * Clone the entire game state, including board and ownedSpaces lists
+     * Deep clone the game: copy board and recreate players.
      */
     private OthelloGame cloneGame(OthelloGame orig) {
-        // 1. Create new players
         Player p1 = new HumanPlayer();
         Player p2 = new HumanPlayer();
         p1.setColor(orig.getPlayerOne().getColor());
         p2.setColor(orig.getPlayerTwo().getColor());
-
-        // 2. Initialize a new game and copy the board
         OthelloGame copy = new OthelloGame(p1, p2);
-        BoardSpace[][] ob = orig.getBoard();
-        BoardSpace[][] nb = new BoardSpace[8][8];
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                nb[i][j] = new BoardSpace(ob[i][j]);
-            }
-        }
-        copy.setBoard(nb);
 
-        // 3. Rebuild ownedSpaces lists
-        for (BoardSpace[] row : nb) {
-            for (BoardSpace bs : row) {
-                if (bs.getType() == p1.getColor())      p1.getPlayerOwnedSpacesSpaces().add(bs);
-                else if (bs.getType() == p2.getColor()) p2.getPlayerOwnedSpacesSpaces().add(bs);
+        BoardSpace[][] board = orig.getBoard();
+        BoardSpace[][] clone = new BoardSpace[board.length][board[0].length];
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                clone[i][j] = new BoardSpace(board[i][j]);
             }
         }
+        copy.setBoard(clone);
         return copy;
+    }
+
+    /**
+     * Match the cloned player instance by color.
+     */
+    private Player matchPlayer(OthelloGame sim, Player orig) {
+        return sim.getPlayerOne().getColor() == orig.getColor()
+                ? sim.getPlayerOne()
+                : sim.getPlayerTwo();
     }
 }
