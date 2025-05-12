@@ -17,8 +17,12 @@ import javafx.scene.shape.Circle;
 import othello.gamelogic.*;
 import othello.gamelogic.state.GameHistory;
 import othello.gamelogic.state.GameMemento;
+import javafx.stage.FileChooser;
+import othello.util.SaveLoadUtil;
 
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -144,28 +148,45 @@ public class GameController  {
         startButton.setDisable(true);
 
         // Setup Save/Load handlers
-        saveBtn.setDisable(false);     // enable Save immediately
-        loadBtn.setDisable(true);      // no mementos yet
+        saveBtn.setDisable(false);
+        loadBtn.setDisable(false);
 
+        // Save to file
         saveBtn.setOnAction(e -> {
-            // save current state
-            history.save(og.createMemento());
-            loadBtn.setDisable(false);
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Save Othello Game");
+            chooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("Othello Save File (*.ots)", "*.ots")
+            );
+            File file = chooser.showSaveDialog(gameBoard.getScene().getWindow());
+            if (file != null) {
+                try {
+                    SaveLoadUtil.saveGame(og, file);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
         });
 
         loadBtn.setOnAction(e -> {
-            GameMemento m = history.undo();
-            if (m != null) {
-                // restore model
-                og.restoreFromMemento(m);
-                // refresh UI
-                clearBoard();
-                displayBoard();
-                turnText(og.getCurrentPlayer());
-            }
-            // if no more history, disable Load
-            if (history.undo() == null) {
-                loadBtn.setDisable(true);
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Load Othello Game");
+            chooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("Othello Save File (*.ots)", "*.ots")
+            );
+            File file = chooser.showOpenDialog(gameBoard.getScene().getWindow());
+            if (file != null) {
+                try {
+                    SaveLoadUtil.loadGame(og, file);
+
+                    clearBoard();
+                    displayBoard();
+                    turnText(og.getCurrentPlayer());
+
+                    takeTurn(og.getCurrentPlayer());
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
             }
         });
 
