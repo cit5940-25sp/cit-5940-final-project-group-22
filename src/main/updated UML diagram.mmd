@@ -1,0 +1,222 @@
+classDiagram
+    %% Package: othello
+    class App {
+        -List~String~ acceptedArgs
+        +start(Stage) void
+        +main(String[]) void$
+    }
+
+    %% Package: othello.gamelogic
+    class OthelloGame {
+        +int GAME_BOARD_SIZE
+        -BoardSpace[][] board
+        -Player playerOne
+        -Player playerTwo
+        -Player currentPlayer
+        -Player waitingPlayer
+        +initBoard() void
+        +getBoard() BoardSpace[][]
+        +getPlayerOne() Player
+        +getPlayerTwo() Player
+        +getCurrentPlayer() Player
+        +getAvailableMoves(Player) Map~BoardSpace, List~BoardSpace~~
+        +takeSpace(Player, Player, int, int) void
+        +takeSpaces(Player, Player, Map, BoardSpace) void
+        +computerDecision(ComputerPlayer) BoardSpace
+        +createMemento() GameMemento
+        +restoreFromMemento(GameMemento) void
+        +setBoard(BoardSpace[][]) void
+    }
+
+    class BoardSpace {
+        -int x
+        -int y
+        -SpaceType type
+        +BoardSpace(int, int, SpaceType)
+        +BoardSpace(BoardSpace)
+        +getX() int
+        +getY() int
+        +getType() SpaceType
+        +setType(SpaceType) void
+    }
+
+    class SpaceType {
+        <<enumeration>>
+        EMPTY
+        BLACK
+        WHITE
+        +fill() Color
+    }
+
+    class Player {
+        <<abstract>>
+        -List~BoardSpace~ playerOwnedSpaces
+        -SpaceType color
+        +getAvailableMoves(BoardSpace[][]) Map~BoardSpace, List~BoardSpace~~
+        +getColor() SpaceType
+        +setColor(SpaceType) void
+        +getPlayerOwnedSpacesSpaces() List~BoardSpace~
+    }
+
+    class HumanPlayer {
+    }
+
+    class ComputerPlayer {
+        -Strategy strategy
+        +ComputerPlayer(String)
+        +chooseMove(OthelloGame) BoardSpace
+    }
+
+    %% Package: othello.gamelogic.strategy
+    class Strategy {
+        <<interface>>
+        +chooseMove(OthelloGame, Player) BoardSpace
+    }
+
+    class MinimaxStrategy {
+        -int MAX_DEPTH$
+        +chooseMove(OthelloGame, Player) BoardSpace
+        -minimax(OthelloGame, Player, Player, int, boolean) int
+        -evaluateBoard(OthelloGame, Player, Player) int
+        -cloneGameFully(OthelloGame) OthelloGame
+    }
+
+    class ExpectimaxStrategy {
+        -int MAX_DEPTH$
+        +chooseMove(OthelloGame, Player) BoardSpace
+        -expectimax(OthelloGame, Player, Player, int, boolean) double
+        -evaluateBoard(OthelloGame, Player, Player) int
+        -cloneGameFully(OthelloGame) OthelloGame
+    }
+
+    class MCTSStrategy {
+        -int ITERATIONS$
+        -double EXPLORATION_PARAM$
+        +chooseMove(OthelloGame, Player) BoardSpace
+        -selectUCT(Node) Node
+        -simulateRandomPlayout(Node, Player, Player) boolean
+        -cloneGame(OthelloGame, Player, Player) OthelloGame
+        -findSimPlayer(OthelloGame, Player) Player
+    }
+
+    class CustomStrategy {
+        -int ROLLOUTS$
+        -Random RANDOM$
+        +chooseMove(OthelloGame, Player) BoardSpace
+        -simulatePlayout(OthelloGame, Player, BoardSpace) boolean
+        -cloneGame(OthelloGame) OthelloGame
+        -matchPlayer(OthelloGame, Player) Player
+    }
+
+    class StrategyFactory {
+        +create(String) Strategy$
+    }
+
+    %% Package: othello.gamelogic.state
+    class GameMemento {
+        -BoardSpace[][] boardSnapshot
+        -Player firstPlayer
+        -Player secondPlayer
+        -Player currentPlayer
+        -List~BoardSpace~ p1Spaces
+        -List~BoardSpace~ p2Spaces
+        +GameMemento(BoardSpace[][], Player, Player, Player, List, List)
+        +getBoardSnapshot() BoardSpace[][]
+        +getFirstPlayer() Player
+        +getSecondPlayer() Player
+        +getCurrentPlayer() Player
+        +getP1Spaces() List~BoardSpace~
+        +getP2Spaces() List~BoardSpace~
+    }
+
+    class GameHistory {
+        -List~GameMemento~ history
+        +save(GameMemento) void
+        +undo() GameMemento
+        +clear() void
+    }
+
+    %% Package: othello.gui
+    class GameController {
+        -OthelloGame og
+        -GUISpace[][] guiBoard
+        -GameHistory history
+        -Label turnLabel
+        -Pane gameBoard
+        -Circle turnCircle
+        -Button computerTurnBtn
+        -Button saveBtn
+        -Button loadBtn
+        +initGame(String, String) void
+        +displayBoard() void
+        +clearBoard() void
+        +initSpaces() void
+        +takeTurn(Player) void
+        +showMoves(HumanPlayer) void
+        +computerDecision(ComputerPlayer) void
+        +selectSpace(Player, Map, BoardSpace) void
+        +updateGUIBoard(Player, Map, BoardSpace) void
+        +turnText(Player) void
+        +skipTurnText(Player) void
+        +otherPlayer(Player) Player
+        +gameOver() void
+        +onStartGame(ActionEvent) void
+    }
+
+    class GUISpace {
+        +int SQUARE_SIZE$
+        -Pane squarePane
+        -Rectangle bg
+        -Circle disc
+        -SpaceType type
+        -int x
+        -int y
+        +GUISpace(int, int, SpaceType)
+        +setSquare() void
+        +getSquare() Pane
+        +setBgColor(Color) void
+        +addOrUpdateDisc(SpaceType) void
+    }
+
+    %% Package: othello.util
+    class SaveLoadUtil {
+        +saveGame(OthelloGame, File) void$
+        +loadGame(OthelloGame, File) void$
+    }
+
+    %% Package: othello
+    class Constants {
+        +int[][] BOARD_WEIGHTS$
+    }
+
+    %% Relationships
+    App ..> GameController : creates
+    App --|> javafx.application.Application : extends
+
+    OthelloGame --> BoardSpace : has
+    OthelloGame --> Player : has
+    BoardSpace --> SpaceType : uses
+    Player <|-- HumanPlayer : extends
+    Player <|-- ComputerPlayer : extends
+    ComputerPlayer --> Strategy : uses
+    Strategy <|.. MinimaxStrategy : implements
+    Strategy <|.. ExpectimaxStrategy : implements
+    Strategy <|.. MCTSStrategy : implements
+    Strategy <|.. CustomStrategy : implements
+    StrategyFactory ..> Strategy : creates
+    MinimaxStrategy ..> Constants : uses
+    ExpectimaxStrategy ..> Constants : uses
+
+    GameController --> OthelloGame : manages
+    GameController --> GUISpace : uses
+    GameController --> GameHistory : uses
+    GameController ..> SaveLoadUtil : uses
+
+    GameHistory *-- GameMemento : stores
+    OthelloGame ..> GameMemento : creates
+    GameMemento --> BoardSpace : snapshots
+    GameMemento --> Player : references
+
+    GUISpace --> BoardSpace : visualizes
+
+    SaveLoadUtil ..> OthelloGame : saves/loadsardSpace : visualizes
