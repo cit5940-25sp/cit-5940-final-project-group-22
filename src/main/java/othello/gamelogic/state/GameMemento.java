@@ -22,7 +22,7 @@ public class GameMemento {
                        Player current,
                        List<BoardSpace> p1List,
                        List<BoardSpace> p2List) {
-        // deep copy board
+        // deep copy board.
         int n = board.length, m = board[0].length;
         this.boardSnapshot = new BoardSpace[n][m];
         for (int i = 0; i < n; i++) {
@@ -33,7 +33,7 @@ public class GameMemento {
         this.firstPlayer  = p1;
         this.secondPlayer = p2;
         this.currentPlayer = current;
-        // copy lists to make them immutable
+        // copy lists to make them immutable.
         this.p1Spaces = List.copyOf(p1List);
         this.p2Spaces = List.copyOf(p2List);
     }
