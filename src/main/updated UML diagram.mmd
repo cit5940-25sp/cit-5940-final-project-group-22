@@ -116,7 +116,7 @@ classDiagram
     class GameMemento {
         -BoardSpace[][] boardSnapshot
         -Player firstPlayer
-        -Player secondPlayer
+        -Player secondPlayer  
         -Player currentPlayer
         -List~BoardSpace~ p1Spaces
         -List~BoardSpace~ p2Spaces
@@ -183,7 +183,7 @@ classDiagram
         +saveGame(OthelloGame, File) void$
         +loadGame(OthelloGame, File) void$
     }
-
+    
     %% Package: othello
     class Constants {
         +int[][] BOARD_WEIGHTS$
@@ -192,7 +192,7 @@ classDiagram
     %% Relationships
     App ..> GameController : creates
     App --|> javafx.application.Application : extends
-
+    
     OthelloGame --> BoardSpace : has
     OthelloGame --> Player : has
     BoardSpace --> SpaceType : uses
@@ -200,23 +200,23 @@ classDiagram
     Player <|-- ComputerPlayer : extends
     ComputerPlayer --> Strategy : uses
     Strategy <|.. MinimaxStrategy : implements
-    Strategy <|.. ExpectimaxStrategy : implements
+    Strategy <|.. ExpectimaxStrategy : implements  
     Strategy <|.. MCTSStrategy : implements
     Strategy <|.. CustomStrategy : implements
     StrategyFactory ..> Strategy : creates
     MinimaxStrategy ..> Constants : uses
     ExpectimaxStrategy ..> Constants : uses
-
+    
     GameController --> OthelloGame : manages
     GameController --> GUISpace : uses
     GameController --> GameHistory : uses
     GameController ..> SaveLoadUtil : uses
-
+    
     GameHistory *-- GameMemento : stores
     OthelloGame ..> GameMemento : creates
     GameMemento --> BoardSpace : snapshots
     GameMemento --> Player : references
-
+    
     GUISpace --> BoardSpace : visualizes
-
-    SaveLoadUtil ..> OthelloGame : saves/loadsardSpace : visualizes
+    
+    SaveLoadUtil ..> OthelloGame : saves and loads
