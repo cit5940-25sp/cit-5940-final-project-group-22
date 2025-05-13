@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public class GameController  {
 
-    // FXML Variables to manipulate UI components
+    // FXML Variables to manipulate UI components.
     @FXML
     private Label turnLabel;
 
@@ -57,7 +57,7 @@ public class GameController  {
     @FXML private Button saveBtn;
     @FXML private Button loadBtn;
 
-    // Caretaker for mementos
+    // Caretaker for mementos.
     private final GameHistory history = new GameHistory();
 
     // Private variables
@@ -89,17 +89,17 @@ public class GameController  {
             playerTwo = new ComputerPlayer(arg2);
         }
 
-        // Set Colors
+        // Set Colors.
         playerOne.setColor(BoardSpace.SpaceType.BLACK);
         playerTwo.setColor(BoardSpace.SpaceType.WHITE);
 
-        // Make a new game, create the visual board and display it with initial spaces
+        // Make a new game, create the visual board and display it with initial spaces.
         og = new OthelloGame(playerOne, playerTwo);
         guiBoard = new GUISpace[8][8];
         displayBoard();
         initSpaces();
 
-        // Player 1 starts the game
+        // Player 1 starts the game.
         turnText(playerOne);
         takeTurn(playerOne);
     }
