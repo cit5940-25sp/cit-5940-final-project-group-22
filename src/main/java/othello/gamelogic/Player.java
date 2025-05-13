@@ -40,7 +40,7 @@ public abstract class Player {
                 ? BoardSpace.SpaceType.WHITE
                 : BoardSpace.SpaceType.BLACK;
 
-        // Directions: N, NE, E, SE, S, SW, W, NW
+        // Directions: N, NE, E, SE, S, SW, W, NW.
         int[] dx = {-1,-1, 0, 1, 1, 1, 0,-1};
         int[] dy = { 0, 1, 1, 1, 0,-1,-1,-1};
         int size = board.length;
@@ -52,12 +52,12 @@ public abstract class Player {
                 }
 
                 List<BoardSpace> origins = new ArrayList<>();
-                // Check each direction for flippable opponent pieces
+                // Check each direction for flippable opponent pieces.
                 for (int d = 0; d < dx.length; d++) {
                     int x = i + dx[d], y = j + dy[d];
                     boolean seenOpponent = false;
 
-                    // Traverse while encountering opponent pieces
+                    // Traverse while encountering opponent pieces.
                     while (x >= 0 && x < size
                             && y >= 0 && y < size
                             && board[x][y].getType() == opponent) {

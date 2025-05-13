@@ -53,7 +53,7 @@ public class PlayerTest {
             for (BoardSpace origin : origins) {
                 assertEquals(BoardSpace.SpaceType.BLACK, origin.getType(),
                         "Origin must be black");
-                // must lie in straight line
+                // must lie in straight line for game
                 int dx = Integer.signum(origin.getX() - dest.getX());
                 int dy = Integer.signum(origin.getY() - dest.getY());
                 assertTrue(Math.abs(dx) <= 1 && Math.abs(dy) <= 1,

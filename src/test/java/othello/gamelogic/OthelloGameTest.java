@@ -39,7 +39,7 @@ public class OthelloGameTest {
         assertTrue(black.getPlayerOwnedSpacesSpaces().contains(board[4][3]));
         assertTrue(white.getPlayerOwnedSpacesSpaces().contains(board[3][3]));
         assertTrue(white.getPlayerOwnedSpacesSpaces().contains(board[4][4]));
-        // Black goes first
+        // Black goes first hand
         assertSame(black, game.getCurrentPlayer());
     }
 
