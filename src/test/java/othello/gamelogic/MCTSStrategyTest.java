@@ -21,13 +21,13 @@ public class MCTSStrategyTest {
     void setUp() {
         mctsPlayer   = new ComputerPlayer("mcts");
         minimaxPlayer = new ComputerPlayer("minimax");
-        // Black goes first
+        //  Black goes first
         game = new OthelloGame(mctsPlayer, minimaxPlayer);
     }
 
     @Test
     void testChooseMoveOnInitialBoard() {
-        // On the standard 8×8 start, Black (mctsPlayer) has legal moves.
+        // On the standard 8×8 start, Black (mctsPlayer) has legal moves
         Map<BoardSpace, ?> moves = game.getAvailableMoves(mctsPlayer);
         assertFalse(moves.isEmpty(), "Initial moves should exist for Black");
         BoardSpace choice = game.computerDecision(mctsPlayer);
@@ -37,7 +37,7 @@ public class MCTSStrategyTest {
 
     @Test
     void testChooseMoveWhenNoMoves() {
-        // Fill the entire board white → Black has no moves.
+        // Fill the entire board white → Black has no moves
         for (BoardSpace[] row : game.getBoard()) {
             for (BoardSpace s : row) {
                 s.setType(BoardSpace.SpaceType.WHITE);
@@ -46,7 +46,7 @@ public class MCTSStrategyTest {
         Map<BoardSpace, ?> moves = game.getAvailableMoves(mctsPlayer);
         assertTrue(moves.isEmpty(), "There should be no available moves after filling board");
 
-        // Since MCTSStrategy doesn't guard this case, Collections.max() on an empty list will fail.
+        // Since MCTSStrategy doesn't guard this case, Collections.max() on an empty list will fail
         assertThrows(NoSuchElementException.class,
                 () -> game.computerDecision(mctsPlayer),
                 "Expect NoSuchElementException when MCTS has no children to select");
