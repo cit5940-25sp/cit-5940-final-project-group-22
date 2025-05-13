@@ -30,11 +30,11 @@ public class GameHistoryTest {
 
     @Test
     void testSaveAndUndoOrder() {
-        // push first snapshot
+        //  push first snapshot
         GameMemento first = game.createMemento();
         history.save(first);
 
-        // make a move, push second snapshot
+        //  make a move, push second snapshot
         Map<BoardSpace, List<BoardSpace>> moves = game.getAvailableMoves(game.getCurrentPlayer());
         BoardSpace m = moves.keySet().iterator().next();
         game.takeSpaces(game.getCurrentPlayer(),
@@ -42,7 +42,7 @@ public class GameHistoryTest {
         GameMemento second = game.createMemento();
         history.save(second);
 
-        // undo returns second then first
+        //  undo returns second then first
         assertSame(second, history.undo(),
                 "undo() should pop the last saved snapshot first");
         assertSame(first, history.undo(),
