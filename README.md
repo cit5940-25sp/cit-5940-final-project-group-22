@@ -9,7 +9,7 @@
   **A modern implementation of the classic Othello board game featuring advanced AI strategies**
   
   [🎯 Features](#-features) • 
-  [🚀 Quick Start](#-quick-start) • 
+  [🎮 Play](#-play) • 
   [🤖 AI Strategies](#-ai-strategies) • 
   [📁 Structure](#-structure) • 
   [🧪 Testing](#-testing)
