@@ -25,7 +25,7 @@ public class OthelloGame {
 
         initBoard();
 
-        // Initialize turn order: Black (playerOne) goes first
+        // Initialize turn order: Black (player One) goes first
         this.currentPlayer = playerOne;
         this.waitingPlayer = playerTwo;
     }
@@ -68,8 +68,8 @@ public class OthelloGame {
         playerTwo.getPlayerOwnedSpacesSpaces().clear();
 
         // 2) Place the 4 starting discs
-        //    (row 3,col 3) WHITE    (row 3,col 4) BLACK
-        //    (row 4,col 3) BLACK    (row 4,col 4) WHITE
+        //    (row 3,col 3) : WHITE    (row 3,col 4) : BLACK
+        //    (row 4,col 3) : BLACK    (row 4,col 4) : WHITE
         board[3][3].setType(BoardSpace.SpaceType.WHITE);
         board[3][4].setType(BoardSpace.SpaceType.BLACK);
         board[4][3].setType(BoardSpace.SpaceType.BLACK);
@@ -98,15 +98,15 @@ public class OthelloGame {
 
     public void takeSpace(Player actingPlayer, Player opponent, int x, int y) {
         BoardSpace space = board[x][y];
-        // If it's already owned by actingPlayer, do nothing
+        // If it's already owned by actingPlayer, do nothing.
         if (space.getType() == actingPlayer.getColor()) {
             return;
         }
-        // If it was owned by opponent, remove it from their list
+        // If it was owned by opponent, remove it from their list.
         if (space.getType() == opponent.getColor()) {
             opponent.getPlayerOwnedSpacesSpaces().remove(space);
         }
-        // Claim the space for actingPlayer
+        // Claim the space for actingPlayer.
         space.setType(actingPlayer.getColor());
         actingPlayer.getPlayerOwnedSpacesSpaces().add(space);
     }
