@@ -5,7 +5,6 @@
   [![Java](https://img.shields.io/badge/Java-11%2B-007396?logo=java&logoColor=white)](https://www.java.com)
   [![JavaFX](https://img.shields.io/badge/JavaFX-11%2B-2ea44f)](https://openjfx.io/)
   [![Maven](https://img.shields.io/badge/Maven-3.6%2B-C71A36?logo=apache-maven)](https://maven.apache.org/)
-  [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
   
   **A modern implementation of the classic Othello board game featuring advanced AI strategies**
   
@@ -21,15 +20,6 @@
 
 ## 🎯 Features
 
-<div align="center">
-  
-| Game Modes | AI Strategies | Design Patterns |
-|:----------:|:------------:|:---------------:|
-| 👤 vs 👤 | 🧠 Minimax | 📋 Strategy |
-| 👤 vs 🤖 | 🎲 Expectimax | 💾 Memento |
-| 🤖 vs 🤖 | 🌲 MCTS | 🏭 Factory |
-| | ⭐ Custom | |
-
 </div>
 
 ### ✨ Highlights
@@ -38,23 +28,6 @@
 - 🎯 **Smart AI** - Four different difficulty levels
 - 🧪 **Well-Tested** - 80%+ code coverage
 - 📊 **Real-time Visualization** - See available moves instantly
-
-## 🚀 Quick Start
-
-### Prerequisites
-```bash
-# Ensure you have Java 11+ and Maven 3.6+
-java -version
-mvn -version
-```
-
-### Installation
-```bash
-# Clone and build
-git clone https://github.com/yourusername/othello-game.git
-cd othello-game
-mvn clean compile
-```
 
 ### 🎮 Play
 ```bash
@@ -148,19 +121,10 @@ othello/
 
 | Metric | Status |
 |:------:|:------:|
-| Coverage | ![Coverage](https://img.shields.io/badge/coverage-82%25-brightgreen) |
+| Coverage | ![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen) |
 | Tests | ![Tests](https://img.shields.io/badge/tests-passing-success) |
 | Quality | ![Quality](https://img.shields.io/badge/code%20quality-A-brightgreen) |
 
-</div>
-
-```bash
-# Run tests
-mvn test
-
-# Generate coverage report
-mvn jacoco:report
-```
 
 ## 🛠️ Design Patterns
 
@@ -186,30 +150,6 @@ OthelloGame → GameMemento → GameHistory
 | 🏁 Initial board | 🎯 Available moves | 💾 State management |
 
 </div>
-
-## 🚦 Quick Commands
-
-```bash
-# Build
-mvn clean compile
-
-# Test
-mvn test
-
-# Run GUI
-mvn javafx:run -Djavafx.args="human human"
-
-# Package
-mvn package
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing`)
-5. Open a Pull Request
 
 ---
 
