@@ -26,6 +26,7 @@ public class GameMementoTest {
         game = new OthelloGame(p1, p2);
     }
 
+
     @Test
     void testSnapshotImmutability() {
         // 1. Take a snapshot of the fresh game
